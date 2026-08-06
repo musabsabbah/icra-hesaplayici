@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>İcra Takip & Dosya Kapak Hesabı</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: { brand: { 500: '#6366f1', 600: '#4f46e5' } }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased">
+    <div class="max-w-6xl mx-auto p-6">
+        <header class="mb-8 border-b border-slate-800 pb-4 flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-white tracking-tight">İcra Takip & Dosya Kapak Hesabı</h1>
+                <p class="text-slate-400 text-sm">Gelişmiş Faiz, Harç ve Masraf Hesaplama Paneli</p>
+            </div>
+            <span class="bg-indigo-500/10 text-indigo-400 text-xs px-3 py-1 rounded-full border border-indigo-500/20">v3.2 Fixed</span>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div class="lg:col-span-5 bg-slate-900 border border-slate-800 p-6 rounded-xl shadow-xl h-fit">
+                <h2 class="text-lg font-semibold mb-4 text-slate-200 border-b border-slate-800 pb-2">Takip Parametreleri</h2>
+                
+                <form id="calcForm" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Asıl Alacak Tutarı (TL)</label>
+                        <input type="number" step="0.01" id="asil_alacak" value="100000" required 
+                               class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brand-500">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">Başlangıç Tarihi</label>
+                            <input type="date" id="baslangic_tarihi" value="2026-01-01" required 
+                                   class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">Hesap Tarihi</label>
+                            <input type="date" id="bitis_tarihi" value="2026-07-01" required 
+                                   class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-500">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">Faiz Türü</label>
+                            <select id="faiz_turu" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brand-500 text-xs">
+                                <option value="yasal">Yasal (Kanuni) Faiz</option>
+                                <option value="avans">Avans Faizi (Ticari Faiz)</option>
+                                <option value="akdi">Akdi (Sözleşmesel) Faiz</option>
+                                <option value="mevduat">Mevduat Faizi (Özel Durumlar)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">Faiz Tipi</label>
+                            <select id="faiz_tipi" onchange="toggleFaizInput()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brand-500 text-xs">
+                                <option value="degisken">Değişken (Kademeli)</option>
+                                <option value="sabit">Sabit Oranlı</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="sabit_faiz_box" class="hidden">
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Yıllık Sabit Faiz Oranı (%)</label>
+                        <input type="number" step="0.01" id="sabit_faiz_orani" value="24.00" 
+                               class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brand-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Tahsil Harcı Safhası</label>
+                        <select id="tahsil_harci_safhasi" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brand-500 text-xs">
+                            <option value="hicbiri">Hiçbiri (%0)</option>
+                            <option value="haciz_oncesi">Ödeme Emri Sonrası / Hacizden Önce (%4.55)</option>
+                            <option value="haciz_sonrasi">Hacizden Sonra / Satıştan Önce (%9.10)</option>
+                            <option value="satis_sonrasi">Satıştan / Paraya Çevrilmeden Sonra (%11.38)</option>
+                        </select>
+                    </div>
+
+                    <!-- Seçimlik Kutucuklar (HEPSİ VARSAYILAN OLARAK SEÇİMSİZ) -->
+                    <div class="space-y-2 pt-2 border-t border-slate-800">
+                        <label class="flex items-center space-x-2 text-xs text-slate-300 cursor-pointer">
+                            <input type="checkbox" id="basvurma_harci_ekle" class="rounded bg-slate-950 border-slate-800 text-brand-500 focus:ring-0">
+                            <span>Başvurma Harcı Ekle</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-xs text-slate-300 cursor-pointer">
+                            <input type="checkbox" id="pesin_harc_ekle" class="rounded bg-slate-950 border-slate-800 text-brand-500 focus:ring-0">
+                            <span>Peşin Harç (%0.5) Ekle</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-xs text-slate-300 cursor-pointer">
+                            <input type="checkbox" id="vekalet_ucreti_ekle" class="rounded bg-slate-950 border-slate-800 text-brand-500 focus:ring-0">
+                            <span>AAÜT Vekalet Ücreti Ekle</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-xs text-slate-300 cursor-pointer">
+                            <input type="checkbox" id="tebligat_masrafi_ekle" onchange="toggleTebligatInput()" class="rounded bg-slate-950 border-slate-800 text-brand-500 focus:ring-0">
+                            <span>Tebligat Masrafı Ekle</span>
+                        </label>
+                    </div>
+
+                    <div id="tebligat_box" class="hidden">
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Tebligat / Posta Masrafı (TL)</label>
+                        <input type="number" step="0.01" id="tebligat_masrafi_tutari" value="0.00" 
+                               class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brand-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Borçlu Kısmi Ödeme (TL)</label>
+                        <input type="number" step="0.01" id="kismi_odemeler" value="0" 
+                               class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brand-500">
+                    </div>
+
+                    <button type="submit" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-medium py-2.5 rounded-lg transition-colors shadow-lg shadow-indigo-600/20">
+                        Hesapla
+                    </button>
+                </form>
+            </div>
+
+            <div class="lg:col-span-7 space-y-6">
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl space-y-4">
+                    <h3 class="text-md font-semibold text-slate-200 border-b border-slate-800 pb-2">Hesaplama Sonucu</h3>
+                    
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between py-1 border-b border-slate-800/50">
+                            <span class="text-slate-400">Asıl Alacak</span>
+                            <span id="res_asil" class="font-mono text-slate-200 font-semibold">0,00 TL</span>
+                        </div>
+                        <div class="flex justify-between py-1 border-b border-slate-800/50">
+                            <span class="text-slate-400">Ödenecek Faiz Miktarı</span>
+                            <span id="res_faiz" class="font-mono text-emerald-400 font-semibold">0,00 TL</span>
+                        </div>
+                        
+                        <div id="row_harclar" class="flex justify-between py-1 border-b border-slate-800/50">
+                            <span class="text-slate-400">Harçlar (Tüm Harçlar + Masraflar + Vekalet)</span>
+                            <span id="res_harclar" class="font-mono text-slate-200 font-semibold">0,00 TL</span>
+                        </div>
+
+                        <div class="flex justify-between py-2 bg-indigo-950/40 px-3 rounded-lg border border-indigo-800/50">
+                            <span class="text-slate-200 font-bold">Toplam Dosya Borcu</span>
+                            <span id="res_toplam" class="font-mono text-indigo-400 font-bold text-lg">0,00 TL</span>
+                        </div>
+                    </div>
+
+                    <div id="section_harc_detay" class="mt-4 pt-2 border-t border-slate-800">
+                        <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Harçlar ve Masraf Detayı</h4>
+                        <div class="grid grid-cols-2 gap-2 text-xs text-slate-400">
+                            <div>Başvurma Harcı: <span id="detay_basvurma" class="text-slate-200">0,00 TL</span></div>
+                            <div>Peşin Harç: <span id="detay_pesin" class="text-slate-200">0,00 TL</span></div>
+                            <div>Tahsil Harcı: <span id="detay_tahsil" class="text-slate-200">0,00 TL</span></div>
+                            <div>Tebligat Masrafı: <span id="detay_tebligat" class="text-slate-200">0,00 TL</span></div>
+                            <div class="col-span-2">AAÜT Vekalet Ücreti: <span id="detay_vekalet" class="text-slate-200">0,00 TL</span></div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-2 border-t border-slate-800">
+                        <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Faiz Hesaplama Tablosu</h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead>
+                                    <tr class="text-slate-500 border-b border-slate-800">
+                                        <th class="pb-2">Tarih Aralığı</th>
+                                        <th class="pb-2">Gün</th>
+                                        <th class="pb-2">Oran</th>
+                                        <th class="pb-2 text-right">Tutar</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="faiz_dokum_body" class="divide-y divide-slate-800/40 text-slate-300 font-mono">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const fmt = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' });
+
+        function toggleFaizInput() {
+            const tipi = document.getElementById('faiz_tipi').value;
+            const box = document.getElementById('sabit_faiz_box');
+            box.classList.toggle('hidden', tipi !== 'sabit');
+        }
+
+        function toggleTebligatInput() {
+            const checked = document.getElementById('tebligat_masrafi_ekle').checked;
+            const box = document.getElementById('tebligat_box');
+            box.classList.toggle('hidden', !checked);
+        }
+
+        document.getElementById('calcForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const payload = {
+                asil_alacak: parseFloat(document.getElementById('asil_alacak').value),
+                baslangic_tarihi: document.getElementById('baslangic_tarihi').value,
+                bitis_tarihi: document.getElementById('bitis_tarihi').value,
+                faiz_turu: document.getElementById('faiz_turu').value,
+                faiz_tipi: document.getElementById('faiz_tipi').value,
+                sabit_faiz_orani: parseFloat(document.getElementById('sabit_faiz_orani').value) || 0,
+                tahsil_harci_safhasi: document.getElementById('tahsil_harci_safhasi').value,
+                basvurma_harci_ekle: document.getElementById('basvurma_harci_ekle').checked,
+                pesin_harc_ekle: document.getElementById('pesin_harc_ekle').checked,
+                vekalet_ucreti_ekle: document.getElementById('vekalet_ucreti_ekle').checked,
+                tebligat_masrafi_ekle: document.getElementById('tebligat_masrafi_ekle').checked,
+                tebligat_masrafi_tutari: parseFloat(document.getElementById('tebligat_masrafi_tutari').value) || 0,
+                kismi_odemeler: parseFloat(document.getElementById('kismi_odemeler').value) || 0
+            };
+
+            const res = await fetch('/hesapla', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+            
+            document.getElementById('res_asil').innerText = fmt.format(data.asil_alacak);
+            document.getElementById('res_faiz').innerText = fmt.format(data.odenecek_faiz);
+            document.getElementById('res_toplam').innerText = fmt.format(data.genel_toplam);
+
+            const harcRow = document.getElementById('row_harclar');
+            const harcDetaySection = document.getElementById('section_harc_detay');
+
+            if (data.harclar_toplami > 0) {
+                harcRow.style.display = 'flex';
+                harcDetaySection.style.display = 'block';
+                document.getElementById('res_harclar').innerText = fmt.format(data.harclar_toplami);
+            } else {
+                harcRow.style.display = 'none';
+                harcDetaySection.style.display = 'none';
+            }
+
+            document.getElementById('detay_basvurma').innerText = fmt.format(data.harc_detaylari.basvurma_harci);
+            document.getElementById('detay_pesin').innerText = fmt.format(data.harc_detaylari.pesin_harc);
+            document.getElementById('detay_tahsil').innerText = fmt.format(data.harc_detaylari.tahsil_harci);
+            document.getElementById('detay_tebligat').innerText = fmt.format(data.harc_detaylari.tebligat_masrafi);
+            document.getElementById('detay_vekalet').innerText = fmt.format(data.harc_detaylari.vekalet_ucreti);
+
+            const tbody = document.getElementById('faiz_dokum_body');
+            tbody.innerHTML = '';
+            data.faiz_dokumu.forEach(row => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="py-2 text-slate-300">${row.baslangic} - ${row.bitis}</td>
+                        <td class="py-2">${row.gun} gün</td>
+                        <td class="py-2">%${row.oran}</td>
+                        <td class="py-2 text-right text-emerald-400">${fmt.format(row.tutar)}</td>
+                    </tr>
+                `;
+            });
+        });
+
+        document.getElementById('calcForm').dispatchEvent(new Event('submit'));
+    </script>
+</body>
+</html>
