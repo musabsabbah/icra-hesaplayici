@@ -53,12 +53,12 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-medium text-slate-400 mb-1">Faiz Türü</label>
-                            <select id="faiz_turu" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brand-500 text-xs">
-                                <option value="yasal">Yasal (Kanuni) Faiz</option>
-                                <option value="avans">Avans Faizi (Ticari Faiz)</option>
-                                <option value="akdi">Akdi (Sözleşmesel) Faiz</option>
-                                <option value="mevduat">Mevduat Faizi (Özel Durumlar)</option>
-                            </select>
+                            <select id="faiz_turu" onchange="toggleFaizTuru()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brand-500 text-xs">
+    <option value="yasal">Yasal (Kanuni) Faiz</option>
+    <option value="avans">Avans Faizi (Ticari Faiz)</option>
+    <option value="akdi">Akdi (Sözleşmesel) Faiz</option>
+    <option value="mevduat">Mevduat Faizi (Özel Durumlar)</option>
+</select>
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-400 mb-1">Faiz Tipi</label>
